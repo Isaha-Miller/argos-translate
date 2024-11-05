@@ -47,7 +47,7 @@ class LibreTranslateAPI:
         Returns: The translated text
         """
 
-        url = self.url + "translate"
+        url = parse.urljoin(self.url, "translate")
 
         params = {"q": q, "source": source, "target": target}
 
@@ -56,7 +56,7 @@ class LibreTranslateAPI:
 
         url_params = parse.urlencode(params)
 
-        req = request.Request(url, data=url_params.encode())
+        req = request.Request(url, data=url_params.encode(), method="POST")
 
         response = request.urlopen(req)
 
@@ -70,7 +70,7 @@ class LibreTranslateAPI:
         Returns: A list of available languages ex. [{"code":"en", "name":"English"}]
         """
 
-        url = self.url + "languages"
+        url = parse.urljoin(self.url, "languages")
 
         params = dict()
 
@@ -79,7 +79,7 @@ class LibreTranslateAPI:
 
         url_params = parse.urlencode(params)
 
-        req = request.Request(url, data=url_params.encode())
+        req = request.Request(url, data=url_params.encode(), method="GET")
 
         response = request.urlopen(req)
 
@@ -96,7 +96,7 @@ class LibreTranslateAPI:
         Returns: The detected languages ex. [{"confidence": 0.6, "language": "en"}]
         """
 
-        url = self.url + "detect"
+        url = parse.urljoin(self.url, "detect")
 
         params = {"q": q}
 
@@ -105,7 +105,7 @@ class LibreTranslateAPI:
 
         url_params = parse.urlencode(params)
 
-        req = request.Request(url, data=url_params.encode())
+        req = request.Request(url, data=url_params.encode(), method="POST")
 
         response = request.urlopen(req)
 
