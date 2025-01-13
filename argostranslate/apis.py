@@ -3,6 +3,9 @@ from __future__ import annotations
 import json
 import sys
 from urllib import parse, request
+import requests
+
+import os
 
 from argostranslate.models import ILanguageModel
 
@@ -49,7 +52,9 @@ class LibreTranslateAPI:
 
         url = parse.urljoin(self.url, "translate")
 
-        params = {"q": q, "source": source, "target": target}
+        params = {"q": q,
+                  "source": source,
+                  "target": target}
 
         if self.api_key is not None:
             params["api_key"] = self.api_key
@@ -63,6 +68,67 @@ class LibreTranslateAPI:
         response_str = response.read().decode()
 
         return json.loads(response_str)["translatedText"]
+    
+    def translate_file(self, file: str, source: str = "en", target:str = "es") -> bytes:
+    url = parse.urljoin(self.url, "translate_file")
+
+    file_name = os.path.basename(file)
+
+    # Prepare the form data
+    boundary = str(uuid.uuid4())
+    headers = {
+        "accept": "application/json",
+        "Content-Type": f"multipart/form-data; boundary={boundary}"
+    }
+
+    # Create the multipart body
+    file_type = mimetypes.guess_type(file)[0] or "text/plain"
+
+    multipart_data = [
+        f"--{boundary}",
+        f'Content-Disposition: form-data; name="file"; filename="{file_name}"',
+        f"Content-Type: {file_type}",
+        "",
+        open(file, "rb").read(),
+        f"--{boundary}",
+        'Content-Disposition: form-data; name="source"',
+        "",
+        source,
+        f"--{boundary}",
+        'Content-Disposition: form-data; name="target"',
+        "",
+        target,
+        f"--{boundary}",
+        'Content-Disposition: form-data; name="api_key"',
+        "",
+        
+        
+    ]
+    if self.api_key: 
+        multipart_data.append(self.api_key)
+    
+    multipart_data = multipart_data + [f"--{boundary}--", ""]
+
+    # Convert the multipart data to bytes
+    body = b"\r\n".join(
+        part if isinstance(part, bytes) else part.encode("utf-8")
+        for part in multipart_data
+    )
+
+    # Create the request
+    req = request.Request(url, data=body, headers=headers, method="POST")
+
+    # Send the request and get the response
+    
+    with request.urlopen(req) as response:
+        response_data = response.read().decode("utf-8")
+
+    download_url = json.loads(response_data)["translatedFileUrl"]
+    # download file as a byte object to be saved by the api user
+    with request.urlopen(download_url) as response:
+        file_bytes = response.read()
+        return file_bytes
+
 
     def languages(self):
         """Retrieve list of supported languages.
